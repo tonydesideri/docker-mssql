@@ -1,0 +1,14 @@
+version: "3.2"
+services:
+  mssql:
+    container_name: mssql
+    image: mcr.microsoft.com/mssql/server:2017-latest
+    ports:
+      - "1433:1433"
+    environment:
+      SA_PASSWORD: "icts+denso@2021"
+      ACCEPT_EULA: "Y"
+    volumes:
+      - "./mssqldata:/var/opt/mssql/data"
+      - "./mssqllog:/var/opt/mssql/log"
+      - "./mssqlbackup:/var/opt/mssql/backup"

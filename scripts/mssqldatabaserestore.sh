@@ -1,36 +1,37 @@
 #! /usr/bin/env bash
-while getopts c:d:b: flag
+while getopts ":c:d:f:h" flag
 do
     case "${flag}" in
         c) CONTAINER_NAME=${OPTARG};;
         d) DATABASE_NAME=${OPTARG};;
-        b) BACKUP_NAME=${OPTARG};;
+        f) BACKUP_NAME=${OPTARG};;
+        h) echo "Add description of the script functions here."
+           echo
+           echo "Syntax: scriptTemplate [-c|d]"
+           echo "Usage: $0 -c [container name] -d [database name] -b [backup file name]"
+           echo "options:"
+           echo "-c     Pass the container name by parameter."
+           echo "-d     Pass the name of the database by parameter."
+           echo "-f     Pass the name of the backup file by parameter."
+           echo
+           exit 1;;
+        \?) echo "Error: Invalid flag"
+            exit 1;;
     esac
 done
-# CONTAINER_NAME=$1
-# DATABASE_NAME=$2
-# BACKUP_NAME=$3
 
-if [ -z $CONTAINER_NAME ]
+if [ -z $CONTAINER_NAME] && [ -z $DATABASE_NAME] && [ -z $BACKUP_NAME ]
 then
-  echo "Usage: $0 -c [container name] -d [database name] -b [backup file name]"
-  exit 1
-fi
-
-if [ -z $DATABASE_NAME ]
-then
-  echo "Usage: $0 -c [container name] -d [database name] -b [backup file name]"
-  exit 1
-fi
-
-if [ -z $BACKUP_NAME ]
-then
-  echo "Usage: $0 -c [container name] -d [database name] -b [backup file name]"
-  exit 1
+  read -p 'Container Name: ' CONTAINER_NAME
+  read -p 'Database Name: ' DATABASE_NAME
+  read -p 'Backup Name: ' BACKUP_NAME
 fi
 
 # Check if the backup file can be found
-if [ ! -f ../backups/$BACKUP_NAME ]
+DIR=$(readlink -f "$0")
+DIRTPATH=$(dirname "$DIR")
+
+if [ ! -f $DIRTPATH/../backups/$BACKUP_NAME ]
 then
   echo "Backup file $BACKUP_NAME does not exist."
   exit 1
@@ -46,7 +47,7 @@ echo "Copying backup file $BACKUP_NAME to container '$CONTAINER_NAME'. Note: the
 
 # Copy the file over to a special restore folder in the container, where the sqlcmd binary can access it
 docker exec $CONTAINER_NAME mkdir -p /var/opt/mssql/restores
-docker cp ../backups/$BACKUP_NAME "$CONTAINER_NAME:/var/opt/mssql/restores/$FILE_NAME"
+docker cp $DIRTPATH/../backups/$BACKUP_NAME "$CONTAINER_NAME:/var/opt/mssql/restores/$FILE_NAME"
 
 echo "Restoring database '$DATABASE_NAME' in container '$CONTAINER_NAME'..."
 
